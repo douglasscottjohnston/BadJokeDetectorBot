@@ -1,7 +1,6 @@
 import discord
 import discord.ext
 from discord.ext import commands
-from discord.ext.commands import Greedy
 import os
 import random
 from replit import db
