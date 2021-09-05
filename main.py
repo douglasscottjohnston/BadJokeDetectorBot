@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix='-',intents=intents)
 
 #Global variables
 if "jokes" not in db.keys():
-  db["jokes"] = ["your mom", "Your mom", "You're mom","you're mom", "ur mom", "Ur mom", "urmom", "your mum", "Your mum", "You're mum","you're mum", "ur mum", "Ur mum", "urmum", "69", "deez nuts", "dez nuts", "dz nuts", "deeznuts", "deznuts", "dznuts"]
+  db["jokes"] = ["your mom", "you're mom", "ur mom", "urmom", "your mum", "you're mum", "ur mum", "urmum", "your mamma", "your momma","your mama", "your moma", "yourmamma", "yourmomma", "yourmama", "yourmoma", "yo mom", "yomom", "yo mum", "yomum", "yo momma", "yo moma", "yomoma" "yomomma", "yo mamma", "yomamma", "yo mama", "yomama", "yo ma", "yoma" "69", "deez nuts", "dez nuts", "dz nuts", "deeznuts", "deznuts", "dznuts"]
 
 if "responses" not in db.keys():
   db["responses"] = [
