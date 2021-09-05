@@ -44,8 +44,10 @@ responding = db["responding"]
 
 
 #Commands
-@bot.command()
-async def addJoke(ctx, message):
+@bot.command(name = "addJoke", description = "Adds a joke to the list of cached jokes, jokes are case insensitive")
+@commands.has_permissions(administrator=True)
+async def addJoke(ctx, *, message):
+  message = message.lower()
   print("command caught")
   if message in jokes:
     await ctx.send(message + " is already in the list of bad jokes")
@@ -59,8 +61,9 @@ async def addJoke(ctx, message):
   print(db.keys())
   print(db["jokes"])
 
-@bot.command()
-async def addResponse(ctx, message):
+@bot.command(name = "addResponse", description = "Adds a response to the list of cached responses")
+@commands.has_permissions(administrator=True)
+async def addResponse(ctx, *, message):
   if message in responses:
     await ctx.send(message + " is already in the list of responses")
     return
@@ -73,20 +76,23 @@ async def addResponse(ctx, message):
   print(db.keys())
   print(db["responses"])
 
-@bot.command()
+@bot.command(name = "clearJokes", description = "Clears the entire list of cached jokes")
+@commands.has_permissions(administrator=True)
 async def clearJokes(ctx):
   db["jokes"].value.clear()
   print(db["jokes"])
   await ctx.send("Jokes cleared from memory")
 
-@bot.command()
+@bot.command(name = "clearResponses", description = "Clears the entire list of cached jokes")
+@commands.has_permissions(administrator=True)
 async def clearResponses(ctx):
   db["responses"].value.clear()
   print(db["responses"])
   await ctx.send("Responses cleared from memory")
 
-@bot.command()
-async def removeJoke(ctx, message):
+@bot.command(name = "removeJoke", description = "Removes the specific joke from the list of cached jokes")
+@commands.has_permissions(administrator=True)
+async def removeJoke(ctx, *, message):
   for i in range(len(jokes)):
     if message == jokes[i]:
       del jokes[i]
@@ -97,8 +103,9 @@ async def removeJoke(ctx, message):
 
   await ctx.send(message + ' was removed from the list of bad jokes')
 
-@bot.command()
-async def removeResponse(ctx, message):
+@bot.command(name = "removeResponse", description = "Removes the specific response from the list of cached responses")
+@commands.has_permissions(administrator=True)
+async def removeResponse(ctx, *, message):
   for i in range(len(responses)):
     if message == responses[i]:
       del responses[i]
@@ -107,20 +114,23 @@ async def removeResponse(ctx, message):
   print(responses)
   print(db["responses"])
 
-  await ctx.send(message + ' was removed from the list of bad jokes')
+  await ctx.send(message + ' was removed from the list of responses')
 
-@bot.command()
+@bot.command(name = "listJokes", description = "Lists all of the cached jokes")
+@commands.has_permissions(administrator=True)
 async def listJokes(ctx):
   await ctx.send("Here's all the bad jokes in memory:\n{}".format(jokes))
 
-@bot.command()
+@bot.command(name = "listResponses", description = "Lists all of the cached responses")
+@commands.has_permissions(administrator=True)
 async def listResponses(ctx):
   await ctx.send("Here's all the responses in memory:\n{}".format(responses))
 
-@bot.command()
+@bot.command(name = "responding", description = "Turns responding for the bot on or off, takes true or false as arguments")
+@commands.has_permissions(administrator=True)
 async def responding(ctx, args):
   print("command detected")
-  if args:
+  if args.lower() == "true":
     responding = True
     db["responding"] = responding
     await ctx.send("Responding is on")
@@ -129,34 +139,40 @@ async def responding(ctx, args):
     db["responding"] = responding
     await ctx.send("Responding is off")
 
-@bot.command()
+@bot.command(name = "whitelist", description = "Takes memtions of users and adds them to the whitelist")
+@commands.has_permissions(administrator=True)
 async def whitelist(ctx, *members: commands.Greedy[discord.Member]):
   if not members:
-    print(wlist)
-    await ctx.send(wlist)
+    userFriendly = "" #necissary to make the output readable for the end user because we store the whitelisted users by id
+    for user in wlist:
+      userFriendly += bot.get_user(user).name + ","
+    response = "[" + userFriendly.rstrip(",") + "]" #so that it fits the format of the other command replys
+    await ctx.send(response)
   else:
-    if any(x.name in members for x in wlist):
-      print(wlist)
-      await ctx.send("{} is already on the whitelist".format(ctx.mentions[0]))
+    names = ", ".join(x.name for x in members)
+    print(names)
+    if any(member in members for member in wlist):
+      await ctx.send("{} is already on the whitelist".format(names))
     else:
-      wlist.append(n.name for n in members)
+      for member in members:
+        wlist.append(member.id)
       db["whitelist"].value = wlist
       print(db["whitelist"])
-      await ctx.send("{} now on the whitelist".format(members))
+      await ctx.send("{} now on the whitelist".format(names))
 
-@bot.command()
-async def unwhitelist(ctx, args):
-    if args in wlist:
-      wlist.remove(args)
-      db["whitelist"].value = wlist
-      #debug
+@bot.command(name = "unwhitelist", description = "takes mentions of users and removes them from the whitelist")
+@commands.has_permissions(administrator=True)
+async def unwhitelist(ctx, members: commands.Greedy[discord.Member]):
+  reply = ""
+  for member in members:
+    if wlist.count(member.id) > 0:
+      reply += "{} removed, ".format(member.name)
+      wlist.remove(member.id)
       print(wlist)
-      print(db["whitelist"])
-      await ctx.send("{} was removed from the whitelist".format(args))
     else:
-      print(db["whitelist"])
-      print("{} is not on the whitelist".format(args))
-      await ctx.send("{} is not on the whitelist".format(args))
+      reply += "{} was not in the whitelist, ".format(member.name)
+      print(wlist)
+  await ctx.send(reply.rstrip(", "))
 
 #Events
 @bot.event
@@ -170,18 +186,13 @@ async def on_message(Message):
   if Message.author == bot.user:
     return
 
-  # if Message.content.startswith("-"):
-  #   return
-
-  # if "whitelist" in db.keys() and str(Message.author.id) in db["whitelist"]:
-  #   print("User whitelisted, ignoring message")
-  #   return
-
   if responding:
     print("looking for bad joke")
-    if str(Message.author.id) in wlist:
+    print(Message.author.id)
+    if Message.author.id in wlist: #ignores whitelisted users
         print("User whitelisted, ignoring message")
-    elif any(word in Message.content for word in jokes):
+        return
+    elif any(word.lower() in Message.content for word in jokes):
       print("BAD JOKE DETECTED!")
       await Message.channel.send(Message.author.mention + " BAD JOKE DETECTED!\n{}".format(random.choice(responses)))
     else:
